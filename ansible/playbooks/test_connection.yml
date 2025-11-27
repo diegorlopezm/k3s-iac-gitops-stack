@@ -1,0 +1,32 @@
+---
+# File: ../ansible/playbooks/test_connection.yml
+
+- name: FASE 1 PRUEBA DE CONECTIVIDAD DE INFRAESTRUCTURA
+  hosts: all
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: 1 Ejecutar 'uptime' en todos los nodos (Verificar que están encendidos)
+      ansible.builtin.shell: uptime
+      register: uptime_result
+      
+    - name: 2 Mostrar estado de la conexión
+      ansible.builtin.debug:
+        msg: "✅ Conexión OK a {{ inventory_hostname }}. Tiempo activo: {{ uptime_result.stdout }}"
+      
+    # ----------------------------------------------------
+    # TAREA NUEVA PARA VERIFICACIÓN DE ARCHIVOS
+    # ----------------------------------------------------
+    - name: 3 Crear archivo de verificacion en /root
+      ansible.builtin.copy:
+        content: |
+          Este archivo confirma la ejecución exitosa de Ansible.
+          Creado por el usuario {{ ansible_user }} en {{ ansible_date_time.iso8601 }}.
+          ¡La conexión está lista para K3s!
+        dest: /root/ansible_success_marker.txt
+        owner: root
+        group: root
+        mode: '0644'
+      # 'ignore_errors: yes' es útil si falla un solo nodo, para que el playbook 
+      # pueda seguir intentando en otros, pero lo omitiremos aquí para forzar el éxito.
